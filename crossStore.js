@@ -16,6 +16,7 @@
         removeItem: function (key) { },
         clear: function () { },
         change: function (callback) { },//监听 window.onstorage
+        setProxyUrl: function (url) { } //设置要跨域的域名
     };
 
     var isFunction = function (f) {
@@ -80,6 +81,15 @@
         if (isFunction(callback)) {
             storeChangeCallbacks.push(callback);
             proxyReady();
+        }
+    };
+
+    //设置要跨域的域名
+    var proxyAddress = '';
+
+    crossStorage.setProxyUrl = function (url) {
+        if (url && isString(url) && !isUndefined(url)) {
+            proxyAddress = url;
         }
     };
 
@@ -172,7 +182,7 @@
                     proxy.onload = onload;
                 }
 
-                proxy.src = './crossStore.html';
+                proxy.src = proxyAddress + '/crossStore.html';
             }
 
             if (isFunction(callback)) {
