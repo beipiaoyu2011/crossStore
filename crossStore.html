@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>crossStore</title>
+</head>
+
+<body>
+    <script>
+        (function () {
+            if (!('postMessage') in window || !('localStorage' in window)) {
+
+                var sign = 'CROSS_STORAGE';
+
+                if ('addEventListener' in document) {
+                    window.addEventListener('message', handler, false);
+                } else if ('attachEvent' in document) {
+                    window.attachEvent('onmessage', handler);
+                }
+
+                function handler(msg) {
+                    var data = null;
+
+                    try {
+                        data = JSON.parse(msg.data);
+                    } catch (error) {
+
+                    }
+
+                    if (data && data.sign == sign) {
+                        action(data.type)(data.data, data.token);
+                    }
+                }
+
+                var action = {
+                    set: function (data) {
+                        for (var key in data) {
+                            if (data.hasOwnProperty(key)) {
+                                var val = data[key];
+
+                                try {
+                                    val = JSON.stringify(val);
+                                } catch (e) {
+
+                                }
+
+                                localStorage.setItem(key, val);
+                            }
+                        }
+                    },
+
+                    get: function (key, token) {
+                        var val = localStorage.getItem(key);
+
+                        try {
+                            val = JSON.parse(val);
+                        } catch (e) {
+
+                        }
+
+                        send(token, val);
+                    },
+
+                    del: function (key) {
+                        key ? localStorage.removeItem(key) : localStorage.clear()
+                    }
+                };
+
+                function send(token, data) {
+                    var msg = '';
+
+                    try {
+                        msg = JSON.stringify({
+                            sign: sign,
+                            token: token,
+                            data: data
+                        });
+                    } catch (error) { }
+
+                    if (msg) {
+                        parent.postMessage(msg, '*');
+                    }
+                }
+
+                if (window.addEventListener) {
+                    window.addEventListener('storage', function (e) {
+
+                        var oldValue = e.oldValue;
+                        var newValue = e.newValue;
+
+                        try {
+                            oldValue = JSON.parse(oldValue);
+                        } catch (error) { }
+
+                        try {
+                            newValue = JSON.parse(newValue);
+                        } catch (error) { }
+
+                        send('STORE_CHANGE', {
+                            key: e.key,
+                            oldValue: oldValue,
+                            newValue: newValue
+                        });
+                    });
+                }
+
+            }
+        })();
+    </script>
+</body>
+
+</html>
